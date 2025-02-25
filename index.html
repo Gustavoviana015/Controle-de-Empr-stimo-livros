@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Empréstimo de Livros - Athena Saúde</title>
+    <style>
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: linear-gradient(to right, #004e92, #000428);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        .container {
+            background: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            margin: auto;
+            color: black;
+            animation: fadeIn 0.5s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+        .container::before, .container::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        .container::before {
+            width: 150px;
+            height: 150px;
+            background: yellow;
+            top: -50px;
+            left: -50px;
+        }
+        .container::after {
+            width: 120px;
+            height: 120px;
+            background: blue;
+            bottom: -40px;
+            right: -40px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            transition: all 0.3s ease-in-out;
+        }
+        input:focus {
+            border-color: #004e92;
+            box-shadow: 0 0 10px rgba(0, 78, 146, 0.6);
+            outline: none;
+        }
+        button {
+            background-color: #ffcc00;
+            color: #004e92;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            background-color: #e6b800;
+            transform: scale(1.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background: #004e92;
+            color: white;
+        }
+        td {
+            background: white;
+        }
+        .logo {
+            width: 250px;
+            height: auto;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://media.licdn.com/dms/image/v2/C4D0BAQFxGt4y1anJOw/company-logo_200_200/company-logo_200_200/0/1630463726737/athenasaude_logo?e=2147483647&v=beta&t=C7BHZ-Z7j6qfqnPBvX9z1Xkgnj8Sp66Eg6K7RlkSFTw" alt="Logo Biblioteca" class="logo">
+        <h2>Controle de Empréstimo de Livros - Athena Saúde</h2>
+        <input type="text" id="nome" placeholder="Nome Completo">
+        <input type="email" id="email" placeholder="E-mail">
+        <input type="text" id="cpf" placeholder="CPF">
+        <input type="text" id="livro" placeholder="Nome do Livro">
+        <label for="data_retirada">Data de Retirada</label>
+        <input type="date" id="data_retirada">
+        <label for="data_devolucao">Data de Devolução</label>
+        <input type="date" id="data_devolucao">
+        <button onclick="registrarEmprestimo()">Registrar Empréstimo</button>
+        <input type="text" id="filtroCpf" placeholder="Buscar por CPF" oninput="filtrarPorCpf()">
+        
+        <h3>Empréstimos Registrados</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>CPF</th>
+                    <th>Livro</th>
+                    <th>Data Retirada</th>
+                    <th>Data Devolução</th>
+                    <th>Observação</th>
+                </tr>
+            </thead>
+            <tbody id="listaEmprestimos">
+            </tbody>
+        </table>
+    </div>
+    <script>
+        let emprestimos = JSON.parse(localStorage.getItem('emprestimos')) || [];
+
+        function salvarEmprestimos() {
+            localStorage.setItem('emprestimos', JSON.stringify(emprestimos));
+        }
+
+        function registrarEmprestimo() {
+            let nome = document.getElementById("nome").value;
+            let email = document.getElementById("email").value;
+            let cpf = document.getElementById("cpf").value;
+            let livro = document.getElementById("livro").value;
+            let dataRetirada = document.getElementById("data_retirada").value;
+            let dataDevolucao = document.getElementById("data_devolucao").value;
+
+            if (!nome || !email || !cpf || !livro || !dataRetirada || !dataDevolucao) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            let prazoMaximo = new Date(dataRetirada);
+            prazoMaximo.setDate(prazoMaximo.getDate() + 15);
+            let devolucao = new Date(dataDevolucao);
+
+            let observacao = devolucao > prazoMaximo ? "<span style='color: red;'>Atrasado</span>" : "";
+
+            emprestimos.push({ nome, email, cpf, livro, dataRetirada, dataDevolucao, observacao });
+            salvarEmprestimos();
+            carregarEmprestimos();
+        }
+
+        function carregarEmprestimos() {
+            let tabela = document.getElementById("listaEmprestimos");
+            tabela.innerHTML = "";
+            emprestimos.forEach(e => {
+                let linha = `<tr><td>${e.nome}</td><td>${e.email}</td><td>${e.cpf}</td><td>${e.livro}</td><td>${e.dataRetirada}</td><td>${e.dataDevolucao}</td><td>${e.observacao}</td></tr>`;
+                tabela.innerHTML += linha;
+            });
+        }
+        
+        carregarEmprestimos();
+    </script>
+</body>
+</html>
